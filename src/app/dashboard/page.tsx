@@ -7,7 +7,7 @@ import React from 'react'
 const page = async() => {
     const {getUser} = getKindeServerSession()
     const user = await getUser()
-
+  console.log(user?.given_name)
     if(!user || !user.id) redirect("/auth-callback?origin=dashboard");
     const dbuser =await db.user.findFirst({
     where:{
