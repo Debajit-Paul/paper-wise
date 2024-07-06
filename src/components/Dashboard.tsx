@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Button } from "./ui/button";
+import Image from "next/image";
 
 const Dashboard = () => {
   const [currentlyDeletingFile, setCurrentlyDeletingFile] = useState<
@@ -28,6 +29,8 @@ const Dashboard = () => {
       setCurrentlyDeletingFile(null);
     },
   });
+  const { data: pdf } = trpc.getPDF.useQuery();
+  console.log(pdf);
 
   return (
     <main className="mx-auto max-w-7xl md:p-10 px-5">
@@ -36,6 +39,7 @@ const Dashboard = () => {
 
         <UploadButton />
       </div>
+      <img src={`${pdf}`} alt="text" width={78} height={27} />
 
       {/* display user files */}
       {files && files?.length !== 0 ? (

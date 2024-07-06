@@ -3,6 +3,14 @@ import { privateProcedure, publicProcedure, router } from "./trpc";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/db";
 import { z } from "zod";
+import { AWS } from "@/lib/aws";
+
+const s3 = new AWS.S3();
+
+const BUCKET_NAME =
+  process.env.IMAGE_STORAGE_S3_BUCKET ?? "paper-wise-pdf-bucket";
+const UPLOADING_TIME_LIMIT = 30;
+const UPLOAD_MAX_FILE_SIZE = 1000000;
 
 export const appRouter = router({
   authCallBack: publicProcedure.query(async () => {
@@ -60,6 +68,15 @@ export const appRouter = router({
 
       return file;
     }),
+  getPDF: privateProcedure.query(async () => {
+    // const { userId } = ctx;
+    const pdf = await s3.getSignedUrlPromise("getObject", {
+      Bucket: BUCKET_NAME,
+      Key: `pdf`,
+    });
+
+    return pdf;
+  }),
 });
 // Export type router type signature,
 // NOT the router itself.
