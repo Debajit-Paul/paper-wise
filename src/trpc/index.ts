@@ -68,8 +68,9 @@ export const appRouter = router({
 
       return file;
     }),
-  getPDF: privateProcedure.query(async () => {
-    // const { userId } = ctx;
+
+  getPDF: privateProcedure.query(async ({ ctx }) => {
+    const { userId } = ctx;
     const pdf = await s3.getSignedUrlPromise("getObject", {
       Bucket: BUCKET_NAME,
       Key: `pdf`,
@@ -77,7 +78,30 @@ export const appRouter = router({
 
     return pdf;
   }),
+
+  createPresignedUrl: privateProcedure
+    .input(z.object({ name: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { userId } = ctx;
+      const file = await db.file.create({
+        data: {
+          name: input.name,
+          uploadStatus: "PROGRESS",
+          userId,
+        },
+      });
+
+      const signedUrl = await s3.getSignedUrlPromise("putObject", {
+        Key: `${userId}/${file.id}`,
+        Expires: UPLOADING_TIME_LIMIT,
+        Bucket: BUCKET_NAME,
+        ContentType: "application/pdf",
+      });
+
+      return {
+        url: signedUrl,
+      };
+    }),
 });
-// Export type router type signature,
-// NOT the router itself.
+
 export type AppRouter = typeof appRouter;

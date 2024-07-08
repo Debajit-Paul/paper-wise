@@ -7,10 +7,12 @@ import { DialogContent } from "./ui/dialog";
 import Dropzone from "react-dropzone";
 import { Cloud, File } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { trpc } from "@/app/_trpc/client";
 
 const UploadDropzone = () => {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
+
   const startSimulatedProgress = () => {
     setUploadProgress(0);
 
@@ -28,17 +30,34 @@ const UploadDropzone = () => {
     return interval;
   };
 
+  const { mutateAsync: uploadPDF } = trpc.createPresignedUrl.useMutation();
+
   return (
     <Dropzone
       multiple={false}
       onDrop={async (acceptedFile) => {
         setIsUploading(true);
         const progressInterval = startSimulatedProgress();
-        // Upload file
 
-        // await new Promise((resolve) => setTimeout(resolve, 6000));
-        clearInterval(progressInterval);
-        setUploadProgress(100);
+        // Upload file
+        try {
+          const { url }: { url: string } = (await uploadPDF({
+            name: acceptedFile[0].name,
+          })) as any;
+
+          await fetch(url, {
+            method: "PUT",
+            body: acceptedFile[0],
+            headers: {
+              "Content-Type": acceptedFile[0].type,
+            },
+          });
+
+          clearInterval(progressInterval);
+          setUploadProgress(100);
+        } catch (error) {
+          console.error("Error uploading file:", error);
+        }
       }}
     >
       {({ getRootProps, getInputProps, acceptedFiles }) => (
